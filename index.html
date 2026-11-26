@@ -132,7 +132,20 @@ function del(type,id){if(confirm('¿Eliminar este registro?')){db[type]=db[type]
 function renderPac(){let q=$('buscarPac').value.toLowerCase();$('tablaPac').innerHTML=db.pacientes.filter(p=>[p.codigo,full(p),p.sala,p.colonia].join(' ').toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.codigo)}</td><td>${esc(full(p))}</td><td>${esc(p.sala)}</td><td>${esc(p.colonia)}</td><td>${p.alta?esc(p.alta):'—'}</td><td><button class="small secondary" onclick="editPac('${p.id}')">Editar</button> <button class="small danger" onclick="del('pacientes','${p.id}')">Eliminar</button></td></tr>`).join('')}
 function renderPer(){let q=$('buscarPer').value.toLowerCase();$('tablaPer').innerHTML=db.personal.filter(p=>[p.codigo,full(p),p.cargo].join(' ').toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.codigo)}</td><td>${esc(full(p))}</td><td>${esc(p.cargo)}</td><td><button class="small secondary" onclick="editPer('${p.id}')">Editar</button> <button class="small danger" onclick="del('personal','${p.id}')">Eliminar</button></td></tr>`).join('')}
 function fillSelect(id,items,caption){let s=$(id),v=s.value;s.innerHTML=`<option value="">${caption}</option>`+items.map(x=>`<option value="${x.id}">${esc(x.codigo?x.codigo+' — ':'')}${esc(full(x)||x.nombre)}</option>`).join('');if(items.some(x=>x.id===v))s.value=v}
-$('formMov').onsubmit=e=>{e.preventDefault();let p=db.personal.find(x=>x.id===$('movPersonal').value);db.movimientos.push({id:uid(),fecha:$('movFecha').value,personal:p?full(p):'',codigo:p?.codigo||'',tipo:$('movTipo').value,hora:$('movHora').value,detalle:$('movDetalle').value});$('movDetalle').value='';save()};
+$('formMov').onsubmit=e=>{
+e.preventDefault();
+let p=db.personal.find(x=>x.id===$('movPersonal').value);
+let fecha=$('movFecha').value, hora=$('movHora').value;
+if(!p){alert('Seleccione un integrante del personal.');return}
+let duplicado=db.movimientos.some(x=>x.fecha===fecha && x.hora===hora && x.codigo===p.codigo);
+if(duplicado){
+  alert('No se puede guardar: este personal ya tiene un movimiento registrado en esa fecha y hora. Verifique la hora o revise el historial.');
+  return;
+}
+db.movimientos.push({id:uid(),fecha,personal:full(p),codigo:p.codigo||'',tipo:$('movTipo').value,hora,detalle:$('movDetalle').value});
+$('movDetalle').value='';
+save();
+};
 function renderMov(){let f=$('filtroMov').value;$('tablaMov').innerHTML=db.movimientos.filter(x=>!f||x.fecha===f).slice().reverse().map(x=>`<tr><td>${esc(x.fecha)}</td><td>${esc(x.personal)}</td><td>${esc(x.codigo)}</td><td>${esc(x.tipo)}</td><td>${esc(x.hora)}</td><td>${esc(x.detalle)}</td><td><button class="small danger" onclick="del('movimientos','${x.id}')">Eliminar</button></td></tr>`).join('')}
 $('formVis').onsubmit=e=>{e.preventDefault();let p=db.pacientes.find(x=>x.id===$('visPaciente').value);db.visitas.push({id:uid(),fecha:$('visFecha').value,paciente:p?full(p):'',visitante:$('visNombre').value,entrada:$('visEntrada').value,salida:$('visSalida').value,relacion:$('visRelacion').value});e.target.reset();$('visFecha').value=hoy();save()};
 function renderVis(){$('tablaVis').innerHTML=db.visitas.slice().reverse().map(x=>`<tr><td>${esc(x.fecha)}</td><td>${esc(x.paciente)}</td><td>${esc(x.visitante)}</td><td>${esc(x.relacion)}</td><td>${esc(x.entrada)}</td><td>${esc(x.salida)}</td><td><button class="small danger" onclick="del('visitas','${x.id}')">Eliminar</button></td></tr>`).join('')}
