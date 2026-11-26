@@ -11,6 +11,9 @@ on:
 jobs:
   android:
     name: Crear APK Android
+          - name: Configurar tiempo de espera
+        run: |
+          echo "GRADLE_OPTS=-Dorg.gradle.internal.http.connectionTimeout=60000 -Dorg.gradle.internal.http.socketTimeout=60000" >> $GITHUB_ENV
     runs-on: ubuntu-latest
     steps:
       - name: Descargar proyecto
