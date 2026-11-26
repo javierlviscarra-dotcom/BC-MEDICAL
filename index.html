@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f9f9a">
+<title>BC MEDICAL</title>
+<style>
+:root{--teal:#0f9f9a;--teal-dark:#087d79;--bg:#f3f8f8;--ink:#183536;--yellow:#fff3bd;--line:#d9e7e6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:var(--teal);color:white;padding:18px 16px;position:sticky;top:0;z-index:3;box-shadow:0 2px 8px #0002}
+header h1{margin:0;font-size:22px;letter-spacing:.5px}header p{margin:3px 0 0;font-size:12px;opacity:.9}
+nav{display:flex;gap:7px;overflow:auto;padding:10px;background:white;border-bottom:1px solid var(--line);position:sticky;top:69px;z-index:2}
+nav button{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--teal-dark);border-radius:20px;padding:9px 13px;font-weight:650}
+nav button.active{background:var(--teal);color:white;border-color:var(--teal)}
+main{max-width:1100px;margin:auto;padding:15px}.panel{display:none}.panel.active{display:block}
+h2{font-size:20px;margin:8px 0 14px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:14px;box-shadow:0 2px 7px #173b3b0a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}
+label{display:block;font-size:13px;font-weight:650;margin-bottom:4px}input,select,textarea{width:100%;padding:11px;border:1px solid #c8d9d8;border-radius:9px;background:white;color:var(--ink);font:inherit;margin-bottom:10px}
+textarea{min-height:78px;resize:vertical}.check{display:flex;align-items:center;gap:8px;margin:4px 0 10px}.check input{width:auto;margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px}button,.btn{border:0;border-radius:9px;padding:10px 14px;background:var(--teal);color:white;font-weight:650;font:inherit;cursor:pointer}
+button.secondary{background:#e7f3f2;color:var(--teal-dark);border:1px solid var(--line)}button.danger{background:#b53c3c}button.small{padding:6px 9px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#edf7f6}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.note{background:var(--yellow);border:1px solid #f0df91;border-radius:10px;padding:12px;margin-bottom:12px}
+.muted{color:#607879;font-size:13px}.stat{font-size:26px;font-weight:750;color:var(--teal-dark)}.hidden{display:none!important}
+@media(min-width:700px){main{padding:22px}nav{justify-content:center}}
+@media print{header,nav,.no-print,form button,.actions{display:none!important}.panel{display:block!important}.card{box-shadow:none;break-inside:avoid}body{background:white}main{max-width:none}}
+</style>
+</head>
+<body>
+<header><h1>BC MEDICAL</h1><p>Registro y control de pacientes, personal, visitas y observaciones</p></header>
+<nav class="no-print" id="nav">
+<button class="active" data-tab="inicio">Inicio</button><button data-tab="pacientes">Pacientes</button><button data-tab="personal">Personal</button><button data-tab="movimientos">Movimientos</button><button data-tab="visitas">Visitas</button><button data-tab="observaciones">Observaciones</button><button data-tab="informes">Informes</button>
+</nav>
+<main>
+<section id="inicio" class="panel active">
+<h2>Panel principal</h2>
+<div class="grid">
+<div class="card"><div class="muted">Pacientes registrados</div><div class="stat" id="nPac">0</div></div>
+<div class="card"><div class="muted">Personal registrado</div><div class="stat" id="nPer">0</div></div>
+<div class="card"><div class="muted">Movimientos registrados</div><div class="stat" id="nMov">0</div></div>
+<div class="card"><div class="muted">Observaciones</div><div class="stat" id="nObs">0</div></div>
+</div>
+<div class="card"><b>Bienvenido a BC MEDICAL</b><p class="muted">Los registros se guardan en este dispositivo mediante el almacenamiento del navegador. Realiza copias de seguridad periódicas desde Informes.</p><div class="note">Importante: esta versión inicial es una herramienta de registro local. No sustituye una historia clínica ni un sistema hospitalario validado. Protege el dispositivo y no ingreses información sensible en equipos compartidos.</div></div>
+</section>
+
+<section id="pacientes" class="panel">
+<h2>Registro de pacientes</h2>
+<div class="card"><form id="formPac">
+<input type="hidden" id="pacId">
+<div class="grid">
+<div><label>Nombre(s)</label><input id="pacNombre" required></div>
+<div><label>Apellido(s)</label><input id="pacApellido" required></div>
+<div><label>Código</label><input id="pacCodigo" placeholder="Automático si se deja vacío"></div>
+<div><label>Colonia / procedencia</label><input id="pacColonia"></div>
+<div><label>Sala</label><input id="pacSala"></div>
+<div><label>Nombre del ministro</label><input id="pacMinistro"></div>
+</div>
+<label class="check"><input type="checkbox" id="pacAlta"> Registrar alta del paciente</label>
+<div class="actions"><button type="submit">Guardar paciente</button><button type="button" class="secondary" onclick="resetPac()">Limpiar</button></div>
+</form></div>
+<div class="card"><label>Buscar paciente</label><input id="buscarPac" placeholder="Nombre, apellido, código o sala" oninput="renderPac()"><div class="tablewrap"><table><thead><tr><th>Código</th><th>Paciente</th><th>Sala</th><th>Procedencia</th><th>Alta</th><th>Acciones</th></tr></thead><tbody id="tablaPac"></tbody></table></div></div>
+</section>
+
+<section id="personal" class="panel">
+<h2>Registro de personal</h2>
+<div class="card"><form id="formPer"><input type="hidden" id="perId"><div class="grid">
+<div><label>Nombre(s)</label><input id="perNombre" required></div><div><label>Apellido(s)</label><input id="perApellido" required></div>
+<div><label>Código</label><input id="perCodigo" placeholder="Automático por iniciales"></div><div><label>Cargo</label><input id="perCargo"></div>
+</div><div class="actions"><button>Guardar personal</button><button type="button" class="secondary" onclick="resetPer()">Limpiar</button></div></form></div>
+<div class="card"><label>Buscar personal</label><input id="buscarPer" oninput="renderPer()" placeholder="Nombre, apellido o código"><div class="tablewrap"><table><thead><tr><th>Código</th><th>Nombre completo</th><th>Cargo</th><th>Acciones</th></tr></thead><tbody id="tablaPer"></tbody></table></div></div>
+</section>
+
+<section id="movimientos" class="panel">
+<h2>Movimientos del personal</h2>
+<div class="card"><form id="formMov"><div class="grid">
+<div><label>Fecha</label><input type="date" id="movFecha" required></div><div><label>Personal</label><select id="movPersonal" required></select></div>
+<div><label>Tipo de movimiento</label><select id="movTipo"><option>Ingreso</option><option>Salida</option><option>Retorno</option><option>Salida final</option></select></div><div><label>Hora</label><input type="time" id="movHora" required></div>
+</div><label>Detalle (opcional)</label><input id="movDetalle"><button>Registrar movimiento</button></form></div>
+<div class="card"><label>Filtrar por fecha</label><input type="date" id="filtroMov" oninput="renderMov()"><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Personal</th><th>Código</th><th>Movimiento</th><th>Hora</th><th>Detalle</th><th></th></tr></thead><tbody id="tablaMov"></tbody></table></div></div>
+</section>
+
+<section id="visitas" class="panel">
+<h2>Registro de visitas</h2>
+<div class="card"><form id="formVis"><div class="grid">
+<div><label>Fecha</label><input type="date" id="visFecha" required></div><div><label>Paciente</label><select id="visPaciente" required></select></div>
+<div><label>Nombre del visitante</label><input id="visNombre" required></div><div><label>Hora de ingreso</label><input type="time" id="visEntrada"></div>
+<div><label>Hora de salida</label><input type="time" id="visSalida"></div><div><label>Relación</label><input id="visRelacion"></div>
+</div><button>Guardar visita</button></form></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Visitante</th><th>Relación</th><th>Ingreso</th><th>Salida</th><th></th></tr></thead><tbody id="tablaVis"></tbody></table></div></div>
+</section>
+
+<section id="observaciones" class="panel">
+<h2>Observaciones de seguridad</h2>
+<div class="note">Sección de observaciones identificada con amarillo suave.</div>
+<div class="card"><form id="formObs"><div class="grid">
+<div><label>Fecha</label><input type="date" id="obsFecha" required></div><div><label>Código de observación</label><input id="obsCodigo" placeholder="Ej. OBS-001"></div>
+<div><label>Paciente / sala (opcional)</label><input id="obsReferencia"></div><div><label>Personal que registra</label><select id="obsPersonal"></select></div>
+</div><label>Observación</label><textarea id="obsTexto" required></textarea><button>Guardar observación</button></form></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Código</th><th>Referencia</th><th>Personal</th><th>Observación</th><th></th></tr></thead><tbody id="tablaObs"></tbody></table></div></div>
+</section>
+
+<section id="informes" class="panel">
+<h2>Informes y respaldo</h2>
+<div class="card"><p>Imprime los registros visibles o exporta una copia de seguridad de los datos.</p><div class="actions"><button onclick="window.print()">Imprimir / Guardar PDF</button><button class="secondary" onclick="exportar()">Exportar copia JSON</button><label class="btn secondary" for="importar" style="cursor:pointer">Importar copia JSON</label><input class="hidden" id="importar" type="file" accept="application/json"></div></div>
+<div class="card"><label>Buscar en registros</label><input id="buscarTodo" placeholder="Buscar texto en pacientes, personal y observaciones" oninput="renderTodo()"><div id="resultadoTodo" class="muted">Escribe para buscar.</div></div>
+<div class="note">La información se almacena únicamente en el navegador de este dispositivo. Borrar los datos del navegador, cambiar de dispositivo o desinstalar el navegador puede ocasionar pérdida de información. Exporta copias de seguridad con frecuencia.</div>
+</section>
+</main>
+<script>
+const KEY='bc_medical_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"pacientes":[],"personal":[],"movimientos":[],"visitas":[],"observaciones":[]}');
+const $=id=>document.getElementById(id);
+const hoy=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function initials(n,a){return ((n.trim().split(/\s+/)[0]?.[0]||'')+(a.trim().split(/\s+/)[0]?.[0]||'')).toUpperCase()}
+function uniqueCode(base,list,id){let c=base||'XX',i=1,code=c;while(list.some(x=>x.codigo===code&&x.id!==id)){code=c+(++i)}return code}
+function full(x){return [x.nombre,x.apellido].filter(Boolean).join(' ')}
+function resetPac(){$('formPac').reset();$('pacId').value=''}
+function resetPer(){$('formPer').reset();$('perId').value=''}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab))});
+$('pacFecha')?.remove();
+$('pacAlta').onchange=()=>{};
+$('formPac').onsubmit=e=>{e.preventDefault();let id=$('pacId').value||uid(),nombre=$('pacNombre').value.trim(),apellido=$('pacApellido').value.trim(),old=db.pacientes.find(x=>x.id===id),same=db.pacientes.find(x=>x.id!==id&&full(x).toLowerCase()===(`${nombre} ${apellido}`).toLowerCase());let codigo=$('pacCodigo').value.trim().toUpperCase();if(same){if(!confirm(`Ya existe ${full(same)} con código ${same.codigo}. ¿Desea conservar ese código?`))return;codigo=same.codigo}
+let p={id,nombre,apellido,codigo:uniqueCode(codigo||initials(nombre,apellido),db.pacientes,id),colonia:$('pacColonia').value,sala:$('pacSala').value,ministro:$('pacMinistro').value,alta:$('pacAlta').checked?(old?.alta||hoy()):''};let i=db.pacientes.findIndex(x=>x.id===id);i<0?db.pacientes.push(p):db.pacientes[i]=p;resetPac();save()};
+$('formPer').onsubmit=e=>{e.preventDefault();let id=$('perId').value||uid(),nombre=$('perNombre').value.trim(),apellido=$('perApellido').value.trim(),codigo=$('perCodigo').value.trim().toUpperCase();let p={id,nombre,apellido,codigo:uniqueCode(codigo||initials(nombre,apellido),db.personal,id),cargo:$('perCargo').value};let i=db.personal.findIndex(x=>x.id===id);i<0?db.personal.push(p):db.personal[i]=p;resetPer();save()};
+function editPac(id){let p=db.pacientes.find(x=>x.id===id);$('pacId').value=id;$('pacNombre').value=p.nombre;$('pacApellido').value=p.apellido;$('pacCodigo').value=p.codigo;$('pacColonia').value=p.colonia;$('pacSala').value=p.sala;$('pacMinistro').value=p.ministro;$('pacAlta').checked=!!p.alta;document.querySelector('[data-tab=pacientes]').click();window.scrollTo(0,0)}
+function editPer(id){let p=db.personal.find(x=>x.id===id);$('perId').value=id;$('perNombre').value=p.nombre;$('perApellido').value=p.apellido;$('perCodigo').value=p.codigo;$('perCargo').value=p.cargo;document.querySelector('[data-tab=personal]').click();window.scrollTo(0,0)}
+function del(type,id){if(confirm('¿Eliminar este registro?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
+function renderPac(){let q=$('buscarPac').value.toLowerCase();$('tablaPac').innerHTML=db.pacientes.filter(p=>[p.codigo,full(p),p.sala,p.colonia].join(' ').toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.codigo)}</td><td>${esc(full(p))}</td><td>${esc(p.sala)}</td><td>${esc(p.colonia)}</td><td>${p.alta?esc(p.alta):'—'}</td><td><button class="small secondary" onclick="editPac('${p.id}')">Editar</button> <button class="small danger" onclick="del('pacientes','${p.id}')">Eliminar</button></td></tr>`).join('')}
+function renderPer(){let q=$('buscarPer').value.toLowerCase();$('tablaPer').innerHTML=db.personal.filter(p=>[p.codigo,full(p),p.cargo].join(' ').toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.codigo)}</td><td>${esc(full(p))}</td><td>${esc(p.cargo)}</td><td><button class="small secondary" onclick="editPer('${p.id}')">Editar</button> <button class="small danger" onclick="del('personal','${p.id}')">Eliminar</button></td></tr>`).join('')}
+function fillSelect(id,items,caption){let s=$(id),v=s.value;s.innerHTML=`<option value="">${caption}</option>`+items.map(x=>`<option value="${x.id}">${esc(x.codigo?x.codigo+' — ':'')}${esc(full(x)||x.nombre)}</option>`).join('');if(items.some(x=>x.id===v))s.value=v}
+$('formMov').onsubmit=e=>{e.preventDefault();let p=db.personal.find(x=>x.id===$('movPersonal').value);db.movimientos.push({id:uid(),fecha:$('movFecha').value,personal:p?full(p):'',codigo:p?.codigo||'',tipo:$('movTipo').value,hora:$('movHora').value,detalle:$('movDetalle').value});$('movDetalle').value='';save()};
+function renderMov(){let f=$('filtroMov').value;$('tablaMov').innerHTML=db.movimientos.filter(x=>!f||x.fecha===f).slice().reverse().map(x=>`<tr><td>${esc(x.fecha)}</td><td>${esc(x.personal)}</td><td>${esc(x.codigo)}</td><td>${esc(x.tipo)}</td><td>${esc(x.hora)}</td><td>${esc(x.detalle)}</td><td><button class="small danger" onclick="del('movimientos','${x.id}')">Eliminar</button></td></tr>`).join('')}
+$('formVis').onsubmit=e=>{e.preventDefault();let p=db.pacientes.find(x=>x.id===$('visPaciente').value);db.visitas.push({id:uid(),fecha:$('visFecha').value,paciente:p?full(p):'',visitante:$('visNombre').value,entrada:$('visEntrada').value,salida:$('visSalida').value,relacion:$('visRelacion').value});e.target.reset();$('visFecha').value=hoy();save()};
+function renderVis(){$('tablaVis').innerHTML=db.visitas.slice().reverse().map(x=>`<tr><td>${esc(x.fecha)}</td><td>${esc(x.paciente)}</td><td>${esc(x.visitante)}</td><td>${esc(x.relacion)}</td><td>${esc(x.entrada)}</td><td>${esc(x.salida)}</td><td><button class="small danger" onclick="del('visitas','${x.id}')">Eliminar</button></td></tr>`).join('')}
+$('formObs').onsubmit=e=>{e.preventDefault();db.observaciones.push({id:uid(),fecha:$('obsFecha').value,codigo:$('obsCodigo').value||'OBS-'+String(db.observaciones.length+1).padStart(3,'0'),referencia:$('obsReferencia').value,personal:db.personal.find(x=>x.id===$('obsPersonal').value)?full(db.personal.find(x=>x.id===$('obsPersonal').value)):'',texto:$('obsTexto').value});e.target.reset();$('obsFecha').value=hoy();save()};
+function renderObs(){$('tablaObs').innerHTML=db.observaciones.slice().reverse().map(x=>`<tr style="background:#fff9df"><td>${esc(x.fecha)}</td><td>${esc(x.codigo)}</td><td>${esc(x.referencia)}</td><td>${esc(x.personal)}</td><td>${esc(x.texto)}</td><td><button class="small danger" onclick="del('observaciones','${x.id}')">Eliminar</button></td></tr>`).join('')}
+function renderTodo(){let q=$('buscarTodo').value.toLowerCase();if(!q){$('resultadoTodo').textContent='Escribe para buscar.';return}let all=[...db.pacientes.map(x=>({t:'Paciente',s:full(x)+' '+x.codigo+' '+x.sala})),...db.personal.map(x=>({t:'Personal',s:full(x)+' '+x.codigo})),...db.observaciones.map(x=>({t:'Observación',s:x.codigo+' '+x.referencia+' '+x.texto}))].filter(x=>x.s.toLowerCase().includes(q));$('resultadoTodo').innerHTML=all.length?all.map(x=>`<p><b>${x.t}:</b> ${esc(x.s)}</p>`).join(''):'Sin resultados.'}
+function exportar(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BC-MEDICAL-respaldo-'+hoy()+'.json';a.click();URL.revokeObjectURL(a.href)}
+$('importar').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!obj.pacientes||!obj.personal)throw Error();if(confirm('La importación reemplazará los datos actuales. ¿Continuar?')){db={pacientes:[],personal:[],movimientos:[],visitas:[],observaciones:[],...obj};save();alert('Copia importada.')}}catch(err){alert('No se pudo leer la copia.')}e.target.value=''};
+function renderAll(){renderPac();renderPer();renderMov();renderVis();renderObs();fillSelect('movPersonal',db.personal,'Seleccionar personal');fillSelect('obsPersonal',db.personal,'Seleccionar personal');fillSelect('visPaciente',db.pacientes,'Seleccionar paciente');$('nPac').textContent=db.pacientes.length;$('nPer').textContent=db.personal.length;$('nMov').textContent=db.movimientos.length;$('nObs').textContent=db.observaciones.length}
+['movFecha','visFecha','obsFecha'].forEach(id=>$(id).value=hoy());renderAll();
+</script>
+</body></html>
