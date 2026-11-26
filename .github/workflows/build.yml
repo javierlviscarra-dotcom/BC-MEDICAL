@@ -1,0 +1,118 @@
+
+name: Construir BC MEDICAL
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'index.html'
+      - '.github/workflows/build.yml'
+
+jobs:
+  android:
+    name: Crear APK Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Preparar aplicación Android
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/android@6 @capacitor/cli@6
+          echo '{"appId":"com.bcmedical.app","appName":"BC MEDICAL","webDir":"www"}' > capacitor.config.json
+          npx cap add android
+          npx cap sync android
+
+      - name: Compilar APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BC-MEDICAL-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  windows:
+    name: Crear instalador Windows
+    runs-on: windows-latest
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Preparar aplicación Windows
+        shell: bash
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "bc-medical",
+            "version": "1.0.0",
+            "description": "BC MEDICAL",
+            "main": "main.cjs",
+            "scripts": {
+              "dist": "electron-builder --win nsis"
+            },
+            "build": {
+              "appId": "com.bcmedical.app",
+              "productName": "BC MEDICAL",
+              "files": ["index.html", "main.cjs"],
+              "win": {
+                "target": "nsis"
+              }
+            }
+          }
+          EOF
+
+          cat > main.cjs <<'EOF'
+          const { app, BrowserWindow } = require('electron');
+          const path = require('path');
+
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1200,
+              height: 800,
+              webPreferences: {
+                contextIsolation: true,
+                nodeIntegration: false
+              }
+            });
+            win.loadFile(path.join(__dirname, 'index.html'));
+          }
+
+          app.whenReady().then(createWindow);
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') app.quit();
+          });
+          EOF
+
+          npm install --save-dev electron@31 electron-builder@24
+
+      - name: Compilar instalador
+        run: npx electron-builder --win nsis
+
+      - name: Guardar instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: BC-MEDICAL-WINDOWS
+          path: dist/*.exe
